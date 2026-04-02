@@ -1,0 +1,18 @@
+const startBtn = document.getElementById("startBtn");
+const startScreen = document.getElementById("startScreen");
+const flashbang = document.getElementById("flashbang");
+const finalImage = document.getElementById("finalImage");
+
+let hasStarted = false;
+
+startBtn.addEventListener("click", () => {
+  if (hasStarted) return;
+  hasStarted = true;
+
+  startScreen.classList.add("hide");
+  flashbang.classList.add("active");
+
+  setTimeout(() => {
+    finalImage.classList.add("show");
+  }, 900);
+});
