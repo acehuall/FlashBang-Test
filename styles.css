@@ -1,18 +1,103 @@
-const startBtn = document.getElementById("startBtn");
-const startScreen = document.getElementById("startScreen");
-const flashbang = document.getElementById("flashbang");
-const finalImage = document.getElementById("finalImage");
+:root {
+  color-scheme: dark;
+}
 
-let hasStarted = false;
+* {
+  box-sizing: border-box;
+}
 
-startBtn.addEventListener("click", () => {
-  if (hasStarted) return;
-  hasStarted = true;
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
-  startScreen.classList.add("hide");
-  flashbang.classList.add("active");
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
 
-  setTimeout(() => {
-    finalImage.classList.add("show");
-  }, 900);
-});
+.final-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.final-image.show {
+  opacity: 1;
+}
+
+.start-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at center, #111 0%, #050505 70%, #000 100%);
+  z-index: 3;
+  transition: opacity 220ms ease;
+}
+
+.start-screen.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.start-card {
+  text-align: center;
+  color: #fff;
+}
+
+.start-card h1 {
+  margin: 0 0 0.4rem;
+}
+
+.start-card p {
+  margin: 0 0 1rem;
+  opacity: 0.85;
+}
+
+#startBtn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.flashbang {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.flashbang.active {
+  animation: flashbang 1000ms ease-out forwards;
+}
+
+@keyframes flashbang {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
