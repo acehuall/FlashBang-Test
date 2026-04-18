@@ -3,29 +3,690 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flashbang Demo</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <title>WrestleMania 42 — Prediction Sheet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16161a;
+      --surface2:  #1e1e24;
+      --border:    #2a2a32;
+      --accent:    #e8002d;
+      --gold:      #c9973a;
+      --text:      #f0f0f4;
+      --muted:     #7a7a88;
+      --alt-row:   #121217;
+      --hover:     #1c1c24;
+      --input-bg:  #0f0f14;
+      --shadow:    0 4px 24px rgba(0,0,0,.5);
+    }
+    [data-theme="light"] {
+      --bg:        #f4f4f0;
+      --surface:   #ffffff;
+      --surface2:  #f0eff5;
+      --border:    #dddde6;
+      --text:      #14141a;
+      --muted:     #888898;
+      --alt-row:   #f8f8fc;
+      --hover:     #f0eff8;
+      --input-bg:  #ffffff;
+      --shadow:    0 4px 24px rgba(0,0,0,.08);
+    }
+
+    /* ── RESET ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      transition: background .3s, color .3s;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    .site-header {
+      position: relative;
+      text-align: center;
+      padding: 3rem 1.5rem 2.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .site-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(232,0,45,.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-eyebrow {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: .85rem;
+      letter-spacing: .25em;
+      color: var(--gold);
+      margin-bottom: .5rem;
+      opacity: .9;
+    }
+    .header-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      letter-spacing: .05em;
+      line-height: 1;
+      color: var(--text);
+    }
+    .header-title span { color: var(--accent); }
+    .header-sub {
+      margin-top: .75rem;
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 500;
+    }
+    .header-meta {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .last-saved {
+      font-size: .78rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .last-saved .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: .3; }
+    }
+
+    /* ── TOOLBAR ─────────────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+      align-items: center;
+      justify-content: center;
+      padding: 1.1rem 1.5rem;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--hover); border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+    .btn.danger:hover { border-color: var(--accent); background: rgba(232,0,45,.08); color: var(--accent); }
+    .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ── WRAPPER ─────────────────────────────────────────── */
+    .wrapper {
+      padding: 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ── SCROLL CONTAINER ────────────────────────────────── */
+    .table-scroll {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── TABLE ───────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+
+    /* sticky first column */
+    td:first-child, th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--surface);
+      min-width: 220px;
+      max-width: 260px;
+    }
+    tr:nth-child(even) td:first-child  { background: var(--alt-row); }
+    tr:hover td:first-child            { background: var(--hover); }
+    [data-theme="light"] td:first-child,
+    [data-theme="light"] th:first-child { background: var(--surface); }
+    [data-theme="light"] tr:nth-child(even) td:first-child { background: var(--alt-row); }
+    [data-theme="light"] tr:hover td:first-child { background: var(--hover); }
+
+    /* sticky header row */
+    thead tr { position: sticky; top: 0; z-index: 10; }
+    thead th {
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .75rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .85rem 1rem;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+      text-align: center;
+    }
+    thead th:first-child {
+      text-align: left;
+      color: var(--gold);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: .12em;
+      background: var(--surface2);
+    }
+
+    /* participant columns */
+    thead th:not(:first-child) { min-width: 130px; }
+
+    /* body rows */
+    tbody tr {
+      transition: background .12s;
+    }
+    tbody tr:nth-child(even) { background: var(--alt-row); }
+    tbody tr:hover { background: var(--hover); }
+    tbody tr.section-break td {
+      padding-top: .3rem;
+      border-top: 2px solid var(--border);
+    }
+
+    /* match cell */
+    td {
+      padding: .6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .match-name {
+      font-weight: 600;
+      font-size: .82rem;
+      line-height: 1.4;
+      color: var(--text);
+    }
+    .match-belt {
+      display: inline-block;
+      margin-top: .25rem;
+      font-size: .68rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(201,151,58,.1);
+      border: 1px solid rgba(201,151,58,.25);
+      padding: .1rem .45rem;
+      border-radius: 3px;
+    }
+
+    /* prediction cells */
+    .pred-cell { text-align: center; padding: .5rem .6rem; }
+    .pred-cell select,
+    .pred-cell input[type="text"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .8rem;
+      font-weight: 500;
+      padding: .4rem .5rem;
+      transition: border-color .15s, box-shadow .15s;
+      appearance: none;
+      -webkit-appearance: none;
+      text-align: center;
+    }
+    .pred-cell select { cursor: pointer; }
+    .pred-cell select:focus,
+    .pred-cell input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(232,0,45,.12);
+    }
+    .pred-cell select option { background: var(--surface2); }
+    /* colour-coded if filled */
+    .pred-cell select.has-value,
+    .pred-cell input.has-value {
+      border-color: rgba(201,151,58,.4);
+      background: rgba(201,151,58,.05);
+    }
+
+    /* row-reset button */
+    .row-reset {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: .7rem;
+      transition: all .15s;
+      margin-left: .4rem;
+      flex-shrink: 0;
+    }
+    .row-reset:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,0,45,.08); }
+
+    .match-cell-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: .4rem; }
+    .match-cell-text { flex: 1; }
+
+    /* ── TOAST ───────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: .6rem 1.2rem;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── FOOTER ─────────────────────────────────────────── */
+    .site-footer {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      color: var(--muted);
+      font-size: .75rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    /* ── DARK-MODE TOGGLE ────────────────────────────────── */
+    .theme-toggle {
+      position: relative;
+      width: 40px; height: 22px;
+      flex-shrink: 0;
+    }
+    .theme-toggle input { opacity: 0; width: 0; height: 0; }
+    .theme-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 22px;
+      cursor: pointer;
+      transition: background .3s;
+    }
+    .theme-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      top: 3px; left: 3px;
+      border-radius: 50%;
+      background: var(--text);
+      transition: transform .3s;
+    }
+    .theme-toggle input:checked + .theme-slider { background: var(--accent); }
+    .theme-toggle input:checked + .theme-slider::before { transform: translateX(18px); }
+    .toggle-label {
+      font-size: .78rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-left: auto;
+    }
+
+    /* ── MOBILE ──────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .wrapper { padding: .75rem; }
+      .site-header { padding: 2rem 1rem 1.5rem; }
+      thead th:not(:first-child) { min-width: 110px; }
+      td:first-child, th:first-child { min-width: 160px; max-width: 180px; }
+      .toggle-label { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <main class="app">
-    <img
-      src="./1000014664.png"
-      alt="Final reveal"
-      class="final-image"
-      id="finalImage"
-    />
 
-    <div class="flashbang" id="flashbang" aria-hidden="true"></div>
+  <!-- HEADER -->
+  <header class="site-header">
+    <p class="header-eyebrow">&#9733;&nbsp; Official Group Prediction Sheet &nbsp;&#9733;</p>
+    <h1 class="header-title">WrestleMania <span>42</span></h1>
+    <p class="header-sub">Fill in your picks below — data saves automatically</p>
+    <div class="header-meta">
+      <span class="last-saved" id="lastSaved">
+        <span class="dot"></span>
+        No changes yet
+      </span>
+    </div>
+  </header>
 
-    <section class="start-screen" id="startScreen">
-      <div class="start-card">
-        <h1>Flashbang</h1>
-        <p>Click to start.</p>
-        <button id="startBtn" type="button">Do Not Click</button>
-      </div>
-    </section>
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <button class="btn" onclick="exportCSV()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12v8M8 16l4 4 4-4M20 4H4"/></svg>
+      Export CSV
+    </button>
+    <button class="btn danger" onclick="clearAll()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M3 7h18"/></svg>
+      Clear All
+    </button>
+    <div class="toggle-wrap">
+      <span class="toggle-label">Light mode</span>
+      <label class="theme-toggle">
+        <input type="checkbox" id="themeToggle" onchange="toggleTheme()" />
+        <span class="theme-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- MAIN TABLE -->
+  <main class="wrapper">
+    <div class="table-scroll">
+      <table id="predTable">
+        <thead>
+          <tr>
+            <th>Match</th>
+            <th>Pete</th>
+            <th>Rick</th>
+            <th>Chris</th>
+            <th>Dawn</th>
+            <th>Graham</th>
+            <th>Ed</th>
+            <th>Maddi</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
   </main>
 
-  <script src="./script.js"></script>
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    WrestleMania 42 &mdash; Prediction Sheet &middot; Saves to localStorage automatically
+  </footer>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────
+const PARTICIPANTS = ['Pete','Rick','Chris','Dawn','Graham','Ed','Maddi'];
+const STORAGE_KEY  = 'wm42predictions';
+
+const MATCHES = [
+  {
+    id: 'cody_orton',
+    label: 'Cody Rhodes vs Randy Orton',
+    belt: 'Undisputed WWE Championship',
+    options: ['Cody Rhodes','Randy Orton'],
+  },
+  {
+    id: 'seth_gunther',
+    label: 'Seth Rollins vs Gunther',
+    options: ['Seth Rollins','Gunther'],
+  },
+  {
+    id: 'becky_aj',
+    label: 'Becky Lynch vs AJ Lee',
+    belt: "Women's IC Title",
+    options: ['Becky Lynch','AJ Lee'],
+  },
+  {
+    id: 'vaquer_liv',
+    label: 'Stephanie Vaquer vs Liv Morgan',
+    belt: "Women's World Title",
+    options: ['Stephanie Vaquer','Liv Morgan'],
+  },
+  {
+    id: 'drew_fatu',
+    label: 'Drew McIntyre vs Jacob Fatu',
+    options: ['Drew McIntyre','Jacob Fatu'],
+  },
+  {
+    id: '6man_tag',
+    label: 'Logan Paul / Theory / IShowSpeed vs Usos / LA Knight',
+    belt: '6-Man Tag',
+    options: ['Logan Paul / Theory / IShowSpeed','Usos / LA Knight'],
+  },
+  {
+    id: 'womens_tag_4way',
+    label: "Women's Tag Fatal 4-Way",
+    belt: 'Bliss/Flair · Bayley/Lyra · Jax/Legend · Bella Twins',
+    options: ['Bliss & Flair','Bayley & Lyra','Jax & Legend','Bella Twins'],
+  },
+  {
+    id: 'punk_reigns',
+    label: 'CM Punk vs Roman Reigns',
+    belt: 'World Heavyweight Championship',
+    options: ['CM Punk','Roman Reigns'],
+  },
+  {
+    id: 'brock_oba',
+    label: 'Brock Lesnar vs Oba Femi',
+    options: ['Brock Lesnar','Oba Femi'],
+  },
+  {
+    id: 'rhea_jade',
+    label: 'Rhea Ripley vs Jade Cargill',
+    belt: "WWE Women's Championship",
+    options: ['Rhea Ripley','Jade Cargill'],
+  },
+  {
+    id: 'ic_ladder',
+    label: 'IC Ladder Match',
+    belt: 'Penta · Mysterio · Lee · McDonagh · Rusev · Evans',
+    options: ['Penta','Rey Mysterio','Damian Priest','JD McDonagh','Rusev','Shelton Benjamin / Evans'],
+  },
+  {
+    id: 'sami_trick',
+    label: 'Sami Zayn vs Trick Williams',
+    belt: 'US Title',
+    options: ['Sami Zayn','Trick Williams'],
+  },
+  {
+    id: 'finn_dom',
+    label: 'Finn Bálor vs Dominik Mysterio',
+    options: ['Finn Bálor','Dominik Mysterio'],
+  },
+  {
+    id: 'surprise',
+    label: 'Surprise Appearance?',
+    type: 'text',
+  },
+  {
+    id: 'other',
+    label: 'Other Prediction?',
+    type: 'text',
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────────
+let state = {};  // state[matchId][participant] = value
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch(e) { state = {}; }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  updateLastSaved();
+}
+
+function updateLastSaved() {
+  const el = document.getElementById('lastSaved');
+  const now = new Date();
+  el.innerHTML = `<span class="dot"></span> Saved at ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+}
+
+// ── BUILD TABLE ──────────────────────────────────────────────
+function buildTable() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+
+  MATCHES.forEach((match, idx) => {
+    const tr = document.createElement('tr');
+    if (idx === 7) tr.classList.add('section-break'); // visual break before Punk/Reigns
+
+    // match cell
+    const matchTd = document.createElement('td');
+    matchTd.innerHTML = `
+      <div class="match-cell-inner">
+        <div class="match-cell-text">
+          <div class="match-name">${match.label}</div>
+          ${match.belt ? `<span class="match-belt">${match.belt}</span>` : ''}
+        </div>
+        <button class="row-reset" title="Clear this row" onclick="resetRow('${match.id}')">↺</button>
+      </div>`;
+    tr.appendChild(matchTd);
+
+    // participant cells
+    PARTICIPANTS.forEach(p => {
+      const td = document.createElement('td');
+      td.classList.add('pred-cell');
+      const val = (state[match.id] || {})[p] || '';
+
+      if (match.type === 'text') {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Your pick…';
+        input.value = val;
+        if (val) input.classList.add('has-value');
+        input.addEventListener('input', () => {
+          setCellValue(match.id, p, input.value);
+          input.classList.toggle('has-value', !!input.value.trim());
+        });
+        td.appendChild(input);
+      } else {
+        const sel = document.createElement('select');
+        sel.innerHTML = `<option value="">— pick —</option>`;
+        (match.options || []).forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt; o.textContent = opt;
+          if (val === opt) o.selected = true;
+          sel.appendChild(o);
+        });
+        if (val) sel.classList.add('has-value');
+        sel.addEventListener('change', () => {
+          setCellValue(match.id, p, sel.value);
+          sel.classList.toggle('has-value', !!sel.value);
+        });
+        td.appendChild(sel);
+      }
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+}
+
+function setCellValue(matchId, participant, value) {
+  if (!state[matchId]) state[matchId] = {};
+  state[matchId][participant] = value;
+  saveState();
+}
+
+// ── ROW RESET ────────────────────────────────────────────────
+function resetRow(matchId) {
+  state[matchId] = {};
+  saveState();
+  buildTable();
+  toast('Row cleared ↺');
+}
+
+// ── CLEAR ALL ────────────────────────────────────────────────
+function clearAll() {
+  if (!confirm('Clear ALL predictions for everyone? This cannot be undone.')) return;
+  state = {};
+  saveState();
+  buildTable();
+  toast('All predictions cleared');
+}
+
+// ── EXPORT CSV ───────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Match', 'Belt', ...PARTICIPANTS];
+  const rows = MATCHES.map(m => {
+    const preds = PARTICIPANTS.map(p => {
+      const v = (state[m.id] || {})[p] || '';
+      return `"${v.replace(/"/g,'""')}"`;
+    });
+    return [`"${m.label.replace(/"/g,'""')}"`, `"${(m.belt||'').replace(/"/g,'""')}"`, ...preds].join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'WrestleMania42_Predictions.csv';
+  a.click();
+  toast('CSV downloaded ✓');
+}
+
+// ── THEME ────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.getElementById('themeToggle').checked;
+  document.documentElement.setAttribute('data-theme', isLight ? 'light' : '');
+  localStorage.setItem('wm42theme', isLight ? 'light' : 'dark');
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('wm42theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('themeToggle').checked = true;
+  }
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+loadState();
+loadTheme();
+buildTable();
+</script>
 </body>
 </html>
